@@ -1,0 +1,11 @@
+*
+
+!README.md
+!.gitignore
+!.editorconfig
+!index.php
+
+!css/
+!mysql/
+!entity-relationship-model/
+!includes/
