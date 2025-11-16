@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <?php endforeach; ?>
         </table>
     <?php endif; ?>
-    <h2>Update SIte URL</h2>
+    <h2>Update Site URL</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update">
 
