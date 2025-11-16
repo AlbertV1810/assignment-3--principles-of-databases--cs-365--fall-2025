@@ -24,6 +24,35 @@ $users = runQuery("SELECT user_id, username FROM users")->fetchAll(PDO::FETCH_AS
 $sites = runQuery("SELECT site_id, site_name FROM sites")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
+$searchResults = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'search') {
+    $search_user_id = $_POST['search_user_id'];
+    $search_site_id = $_POST['search_site_id'];
+
+    $sql = "SELECT u.username AS user_name, s.site_name,
+                   CAST(AES_DECRYPT(c.password, 'secret_key') AS CHAR) AS decrypted_password,
+                   c.comment, c.created_at
+            FROM credentials c
+            JOIN users u ON c.user_id = u.user_id
+            JOIN sites s ON c.site_id = s.site_id
+            WHERE 1";
+
+    $params = [];
+
+    if (!empty($search_user_id)) {
+        $sql .= " AND c.user_id = :user_id";
+        $params[':user_id'] = $search_user_id;
+    }
+
+    if (!empty($search_site_id)) {
+        $sql .= " AND c.site_id = :site_id";
+        $params[':site_id'] = $search_site_id;
+    }
+
+    $searchResults = runQuery($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
+}
+
 <!DOCTYPE html>
 <html>
 <head>
