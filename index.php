@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update'){
-    $site_id = $_POST['update_side_id'];
+    $site_id = $_POST['update_site_id'];
     $new_url = $_POST['new_url'];
 
     $sql = "UPDATE sites SET url = :url WHERE site_id = :site_id";
@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         </select><br><br>
 
         <label> New URL:</label>
-        <input type="text" name="new_url" required><br><br>>
+        <input type="text" name="new_url" required><br><br>
 
         <button type="submit">Update URL</button>
     </form>
