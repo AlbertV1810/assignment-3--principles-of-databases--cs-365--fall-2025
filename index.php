@@ -134,13 +134,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $params[':comment'] = "%" . $_POST['search_comment'] . "%";
         }
 
-        $stmt = runQuery($sql, $params);
+        $results = runQuery($sql, $params);
 
-        if (count($stmt) > 0) {
+        if (count($results) > 0) {
             $searchTableHtml = "<table border='1'><tr>
                 <th>Username</th><th>Email</th><th>Site Name</th><th>URL</th>
                 <th>Password</th><th>Comment</th><th>Created At</th></tr>";
-            foreach ($stmt as $row) {
+            foreach ($results as $row) {
                 $searchTableHtml .= "<tr>
                     <td>{$row['user_name']}</td>
                     <td>{$row['email']}</td>
