@@ -133,7 +133,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         <button type="submit">Search</button>
     </form>
 
-
+    <?php if (!empty($searchResults)): ?>
+        <h3>Search Results</h3>
+        <table border="1">
+            <tr>
+                <th>User</th>
+                <th>Site</th>
+                <th>Password</th>
+                <th>Comment</th>
+                <th>Created At</th>
+            </tr>
+            <?php foreach ($searchResults as $row): ?>
+                <tr>
+                    <td><?= htmlspecialchars($row['user_name']) ?></td>
+                    <td><?= htmlspecialchars($row['site_name']) ?></td>
+                    <td><?= htmlspecialchars($row['decrypted_password']) ?></td>
+                    <td><?= htmlspecialchars($row['comment']) ?></td>
+                    <td><?= htmlspecialchars($row['created_at']) ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    <?php endif; ?>
     <h2>Update Site URL</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update">
