@@ -71,27 +71,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
-    $del_user = $_POST['delete_user_id'] ?? '';
-    $del_site = $_POST['delete_site_id'] ?? '';
-    $delParams = [];
-    $delSql = "DELETE FROM credentials WHERE 1";
+if ($_POST['action'] === 'delete') {
+    $params = [];
+    $sql = "DELETE FROM credentials WHERE 1";
 
-    if (!empty($del_user)) {
-        $delSql .= " AND user_id = :user_id";
-        $delParams[':user_id'] = $del_user;
-    }
-    if (!empty($del_site)) {
-        $delSql .= " AND site_id = :site_id";
-        $delParams[':site_id'] = $del_site;
+    if (!empty($_POST['delete_site_name'])) {
+        $sql .= " AND site_id IN (
+            SELECT site_id FROM sites WHERE site_name LIKE :site_name
+        )";
+        $params[':site_name'] = "%" . $_POST['delete_site_name'] . "%";
     }
 
-    if (empty($delParams)) {
-        $message = "Provide at least one pattern to delete.";
-    } else {
-        runQuery($delSql, $delParams);
-        $message = "Matching credentials deleted.";
+    if (!empty($_POST['delete_email'])) {
+        $sql .= " AND user_id IN (
+            SELECT user_id FROM users WHERE email LIKE :email
+        )";
+        $params[':email'] = "%" . $_POST['delete_email'] . "%";
     }
+
+    if (!empty($_POST['delete_username'])) {
+        $sql .= " AND user_id IN (
+            SELECT user_id FROM users WHERE username LIKE :username
+        )";
+        $params[':username'] = "%" . $_POST['delete_username'] . "%";
+    }
+
+    runQuery($sql, $params);
+    $searchTableHtml = "<p style='color: green;'>Matching credentials deleted successfully.</p>";
 }
 
 $searchTableHtml = '';
@@ -249,6 +255,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <button type="submit" style="background-color: #f44336; color: white; padding: 10px 20px; font-size: 16px;">
             Clear Results
         </button>
+    </form>
+
+    <h2>Delete Credential</h2>
+    <form method="POST">
+        <input type="hidden" name="action" value="delete">
+
+        <label>Site Name (pattern):</label>
+        <input type="text" name="delete_site_name" placeholder="e.g. GitHub"><br>
+
+        <label>Email (pattern):</label>
+        <input type="text" name="delete_email" placeholder="e.g. ada@math.net"><br>
+
+        <label>Username (pattern):</label>
+        <input type="text" name="delete_username" placeholder="e.g. ada_code"><br>
+
+        <button type="submit" style="background-color: #d32f2f; color: white;">Delete</button>
     </form>
 
 </body>
