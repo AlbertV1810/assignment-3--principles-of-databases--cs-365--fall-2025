@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>Password Manager</h1>
+    <h1>TEST!!!!</h1>
 
     <?php if ($message): ?>
         <p><?= htmlspecialchars($message) ?></p>
