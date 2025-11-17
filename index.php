@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-if ($_POST['action'] === 'delete') {
+if (isset($_POST['action']) && $_POST['action'] === 'delete') {
     $params = [];
     $sql = "DELETE FROM credentials WHERE 1";
 
