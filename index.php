@@ -134,7 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $params[':comment'] = "%" . $_POST['search_comment'] . "%";
         }
 
-        //$stmt = rounQuery($sql, $params);
         $results = runQuery($sql, $params);
 
         if (count($results) > 0) {
