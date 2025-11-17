@@ -1,0 +1,31 @@
+table.results {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+table.results th,
+table.results td {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+form label {
+    display: inline-block;
+    width: 80px;
+    margin-bottom: 0.25rem;
+}
+form input[type="text"],
+form input[type="password"],
+form select,
+form textarea {
+    display: block;
+    max-width: 480px;
+    width: 100%;
+    margin-bottom: 0.75rem;
+}
+
+form button {
+    margin-top: 0.25rem;
+}

@@ -94,8 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-$users = runQuery("SELECT user_id, username FROM users")->fetchAll(PDO::FETCH_ASSOC);
-$sites = runQuery("SELECT site_id, site_name FROM sites")->fetchAll(PDO::FETCH_ASSOC);
+//$users = runQuery("SELECT user_id, username FROM users")->fetchAll(PDO::FETCH_ASSOC);
+//$sites = runQuery("SELECT site_id, site_name FROM sites")->fetchAll(PDO::FETCH_ASSOC);
 
 $searchTableHtml = '';
 
