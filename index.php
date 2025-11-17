@@ -227,7 +227,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <button type="submit">Search</button>
     </form>
 
-    echo $searchTableHtml;
+    <div class="search-results">
+        <?php echo $searchTableHtml ?? ''; ?>
+    </div>
 
     <h2>Update Site URL</h2>
     <form method="POST">
