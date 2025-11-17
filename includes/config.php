@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/../includes/config.php';
 $host = 'localhost';
 $dbname = 'student_passwords';
 $username = 'passwords_user';
