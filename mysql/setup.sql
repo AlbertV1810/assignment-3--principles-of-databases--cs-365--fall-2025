@@ -22,8 +22,8 @@ CREATE TABLE sites (
 
 CREATE TABLE credentials (
   credential_id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT,
-  site_id INT,
+  user_id TEXT,
+  site_id TEXT,
   password VARBINARY(255),
   comment TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
