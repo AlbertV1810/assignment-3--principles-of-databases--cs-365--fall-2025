@@ -4,36 +4,73 @@ require_once 'includes/helpers.php';
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'insert') {
-    $user_id = $_POST['user_id'];
-    $site_id = $_POST['site_id'];
-    $password = $_POST['password'];
-    $comment = $_POST['comment'];
+    $site_name = trim($_POST['site_name'] ?? '');
+    $site_url  = trim($_POST['site_url'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $username  = trim($_POST['username'] ?? '');
+    $password  = $_POST['password'] ?? '';
+    $comment   = trim($_POST['comment'] ?? '');
 
-    $sql = "INSERT INTO credentials (user_id, site_id, password, comment) VALUES (:user_id, :site_id, AES_ENCRYPT(:password, 'secret_key'), :comment)";
-    runQuery($sql, [
-        ':user_id' => $user_id,
-        ':site_id' => $site_id,
-        ':password' => $password,
-        ':comment' => $comment
-    ]);
+    if ($site_name === '' || $username === '' || $password === '') {
+        $message = "site name, username, and password are required.";
+    } else {
+        $stmt = runQuery("SELECT user_id FROM users WHERE username = :username", [':username' => $username]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user) {
+            $user_id = $user['user_id'];
+        } else {
+            $stmt = runQuery("INSERT INTO users (first_name, last_name, username, email) VALUES ('', '', :username, :email)", [
+                ':username' => $username,
+                ':email' => $email
+            ]);
+            $user_id = $pdo->lastInsertId();
+        }
 
-    $message = "Credential inserted successfully!";
+        $stmt = runQuery("SELECT site_id FROM sites WHERE site_name = :site_name", [':site_name' => $site_name]);
+        $site = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($site) {
+            $site_id = $site['site_id'];
+            if ($site_url !== '') {
+                runQuery("UPDATE sites SET url = :url WHERE site_id = :site_id", [
+                    ':url' => $site_url,
+                    ':site_id' => $site_id
+                ]);
+            }
+        } else {
+            runQuery("INSERT INTO sites (site_name, url) VALUES (:site_name, :url)", [
+                ':site_name' => $site_name,
+                ':url' => $site_url
+            ]);
+            $site_id = $pdo->lastInsertId();
+        }
+
+        runQuery("INSERT INTO credentials (user_id, site_id, password, comment) VALUES (:user_id, :site_id, AES_ENCRYPT(:password, 'secret_key'), :comment)", [
+            ':user_id' => $user_id,
+            ':site_id' => $site_id,
+            ':password' => $password,
+            ':comment' => $comment
+        ]);
+
+        $message = "Credential inserted successfully!";
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update'){
-    $site_id = $_POST['update_site_id'];
-    $new_url = $_POST['new_url'];
+    $target_site_name = trim($_POST['update_site_name'] ?? '');
+    $new_url = trim($_POST['new_url'] ?? '');
 
-    $sql = "UPDATE sites SET url = :url WHERE site_id = :site_id";
-    runQuery($sql, [
-        ':url' => $new_url,
-        ':site_id' => $site_id
-    ]);
-
-    $message = "Site URL updated successfully!";
+    if ($target_site_name === '' || $new_url === '') {
+        $message = "Provide a site name and new URL to update.";
+    } else {
+        $sql = "UPDATE sites SET url = :url WHERE site_name = :site_name";
+        runQuery($sql, [
+            ':url' => $new_url,
+            ':site_name' => $target_site_name
+        ]);
+        $message = "Site URL updated successfully!";
+    }
 }
 
-// Handle delete action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
     $del_user = $_POST['delete_user_id'] ?? '';
     $del_site = $_POST['delete_site_id'] ?? '';
@@ -60,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 $users = runQuery("SELECT user_id, username FROM users")->fetchAll(PDO::FETCH_ASSOC);
 $sites = runQuery("SELECT site_id, site_name FROM sites")->fetchAll(PDO::FETCH_ASSOC);
 
-// Prepare search results HTML (empty by default)
 $searchTableHtml = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -96,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $searchTableHtml = '';
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -107,104 +144,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     <h1>Password Manager</h1>
 
     <?php if ($message): ?>
-        <p><?= $message ?></p>
+        <p><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
 
     <h2>Insert New Credential</h2>
     <form method="POST">
         <input type="hidden" name="action" value="insert">
 
-        <label>User:</label>
-        <select name="user_id" required>
-            <option value="">-- Select User --</option>
-            <?php foreach ($users as $user): ?>
-                <option value="<?= $user['user_id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
+        <label>Site/App Name:</label>
+        <input type="text" name="site_name" required>
 
-        <label>Site:</label>
-        <select name="site_id" required>
-            <option value="">-- Select Site --</option>
-            <?php foreach ($sites as $site): ?>
-                <option value="<?= $site['site_id'] ?>"><?= htmlspecialchars($site['site_name']) ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
+        <label>Site URL:</label>
+        <input type="text" name="site_url">
+
+        <label>Email:</label>
+        <input type="text" name="email">
+
+        <label>Username:</label>
+        <input type="text" name="username" required>
 
         <label>Password:</label>
-        <input type="password" name="password" required><br><br>
+        <input type="password" name="password" required>
 
-        <label>Comment:</label><br>
-        <textarea name="comment" rows="4" cols="40" required></textarea><br><br>
+        <label>Comment:</label>
+        <textarea name="comment"></textarea>
 
         <button type="submit">Insert</button>
-    </form>
-
-    <h2>Search Stored Credentials</h2>
-    <form method="POST">
-        <!-- use button values for action -->
-        <label>User:</label>
-        <select name="search_user_id">
-            <option value="">-- All Users --</option>
-            <?php foreach ($users as $user): ?>
-                <option value="<?= $user['user_id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
-
-        <label>Site:</label>
-        <select name="search_site_id">
-            <option value="">-- All Sites --</option>
-            <?php foreach ($sites as $site): ?>
-                <option value="<?= $site['site_id'] ?>"><?= htmlspecialchars($site['site_name']) ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
-
-        <button type="submit" name="action" value="search">Search</button>
-        <button type="submit" name="action" value="clear">Clear Results</button>
-    </form>
-
-    <?php if ($searchTableHtml !== ''): ?>
-        <h3>Search Results</h3>
-        <?= $searchTableHtml ?>
-    <?php endif; ?>
-
-    <h2>Delete Credentials</h2>
-    <form method="POST">
-        <input type="hidden" name="action" value="delete">
-        <label>User:</label>
-        <select name="delete_user_id">
-            <option value="">-- Any User --</option>
-            <?php foreach ($users as $user): ?>
-                <option value="<?= $user['user_id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
-
-        <label>Site:</label>
-        <select name="delete_site_id">
-            <option value="">-- Any Site --</option>
-            <?php foreach ($sites as $site): ?>
-                <option value="<?= $site['site_id'] ?>"><?= htmlspecialchars($site['site_name']) ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
-
-        <button type="submit">Delete</button>
     </form>
 
     <h2>Update Site URL</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update">
 
-        <label>Site:</label>
-        <select name="update_site_id" required>
-            <option value="">-- Select Site --</option>
-            <?php foreach ($sites as $site): ?>
-                <option value="<?= $site['site_id'] ?>"><?= htmlspecialchars($site['site_name']) ?></option>
-            <?php endforeach; ?>
-        </select><br><br>
+        <label>Site Name (pattern):</label>
+        <input type="text" name="update_site_name" placeholder="Exact site name">
 
-        <label> New URL:</label>
-        <input type="text" name="new_url" required><br><br>
+        <label>New URL:</label>
+        <input type="text" name="new_url" required>
 
-        <button type="submit">Update URL</button>
+        <button type="submit">Update</button>
     </form>
+
 </body>
 </html>
