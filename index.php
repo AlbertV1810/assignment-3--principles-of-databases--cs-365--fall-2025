@@ -98,31 +98,63 @@ $searchTableHtml = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'search') {
-        $search_user_id = $_POST['search_user_id'] ?? '';
-        $search_site_id = $_POST['search_site_id'] ?? '';
-
-        $sql = "SELECT u.username AS user_name, s.site_name,
-                       CAST(AES_DECRYPT(c.password, 'secret_key') AS CHAR) AS decrypted_password,
-                       c.comment, c.created_at
-                FROM credentials c
-                JOIN users u ON c.user_id = u.user_id
-                JOIN sites s ON c.site_id = s.site_id
-                WHERE 1";
-
         $params = [];
+        $sql = "
+            SELECT u.username AS user_name, u.email, s.site_name, s.url,
+                   CAST(AES_DECRYPT(c.password, 'secret_key') AS CHAR) AS decrypted_password,
+                   c.comment, c.created_at
+            FROM credentials c
+            JOIN users u ON c.user_id = u.user_id
+            JOIN sites s ON c.site_id = s.site_id
+            WHERE 1
+        ";
 
-        if (!empty($search_user_id)) {
-            $sql .= " AND c.user_id = :user_id";
-            $params[':user_id'] = $search_user_id;
+        if (!empty($_POST['search_site_name'])) {
+            $sql .= " AND s.site_name LIKE :site_name";
+            $params[':site_name'] = "%" . $_POST['search_site_name'] . "%";
         }
-
-        if (!empty($search_site_id)) {
-            $sql .= " AND c.site_id = :site_id";
-            $params[':site_id'] = $search_site_id;
+        if (!empty($_POST['search_url'])) {
+            $sql .= " AND s.url LIKE :url";
+            $params[':url'] = "%" . $_POST['search_url'] . "%";
+        }
+        if (!empty($_POST['search_email'])) {
+            $sql .= " AND u.email LIKE :email";
+            $params[':email'] = "%" . $_POST['search_email'] . "%";
+        }
+        if (!empty($_POST['search_username'])) {
+            $sql .= " AND u.username LIKE :username";
+            $params[':username'] = "%" . $_POST['search_username'] . "%";
+        }
+        if (!empty($_POST['search_password'])) {
+            $sql .= " AND CAST(AES_DECRYPT(c.password, 'secret_key') AS CHAR) LIKE :password";
+            $params[':password'] = "%" . $_POST['search_password'] . "%";
+        }
+        if (!empty($_POST['search_comment'])) {
+            $sql .= " AND c.comment LIKE :comment";
+            $params[':comment'] = "%" . $_POST['search_comment'] . "%";
         }
 
         $stmt = runQuery($sql, $params);
-        $searchTableHtml = wrapResultsInTable($stmt);
+
+        if (count($stmt) > 0) {
+            $searchTableHtml = "<table border='1'><tr>
+                <th>Username</th><th>Email</th><th>Site Name</th><th>URL</th>
+                <th>Password</th><th>Comment</th><th>Created At</th></tr>";
+            foreach ($stmt as $row) {
+                $searchTableHtml .= "<tr>
+                    <td>{$row['user_name']}</td>
+                    <td>{$row['email']}</td>
+                    <td>{$row['site_name']}</td>
+                    <td>{$row['url']}</td>
+                    <td>{$row['decrypted_password']}</td>
+                    <td>{$row['comment']}</td>
+                    <td>{$row['created_at']}</td>
+                </tr>";
+            }
+            $searchTableHtml .= "</table>";
+        } else {
+            $searchTableHtml = "<table border='1'><tr><td colspan='7'>No results found for your query.</td></tr></table>";
+        }
     }
 
     if ($_POST['action'] === 'clear') {
@@ -173,14 +205,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     <form method="POST">
         <input type="hidden" name="action" value="search">
 
-        <label>Search by Username:</label>
-        <input type="text" name="search_username" placeholder="e.g. ada_code">
+        <label>Site/App Name:</label>
+        <input type="text" name="search_site_name" placeholder="e.g. GitHub"><br>
 
-        <label>Search by Site Name:</label>
-        <input type="text" name="search_site_name" placeholder="e.g. GitHub">
+        <label>Site URL:</label>
+        <input type="text" name="search_url" placeholder="e.g. https://github.com"><br>
 
-        <label>Search by Email:</label>
-        <input type="text" name="search_email" placeholder="e.g. ada@math.net">
+        <label>Email Address:</label>
+        <input type="text" name="search_email" placeholder="e.g. ada@math.net"><br>
+
+        <label>Username:</label>
+        <input type="text" name="search_username" placeholder="e.g. ada_code"><br>
+
+        <label>Password:</label>
+        <input type="text" name="search_password" placeholder="e.g. secure123"><br>
+
+        <label>Comment:</label>
+        <input type="text" name="search_comment" placeholder="e.g. personal account"><br>
 
         <button type="submit">Search</button>
     </form>
