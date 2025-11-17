@@ -169,6 +169,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <button type="submit">Insert</button>
     </form>
 
+    <h2>Search Credentials</h2>
+    <form method="POST">
+        <input type="hidden" name="action" value="search">
+
+        <label>Search by Username:</label>
+        <input type="text" name="search_username" placeholder="e.g. ada_code">
+
+        <label>Search by Site Name:</label>
+        <input type="text" name="search_site_name" placeholder="e.g. GitHub">
+
+        <label>Search by Email:</label>
+        <input type="text" name="search_email" placeholder="e.g. ada@math.net">
+
+        <button type="submit">Search</button>
+    </form>
+
     <h2>Update Site URL</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update">
