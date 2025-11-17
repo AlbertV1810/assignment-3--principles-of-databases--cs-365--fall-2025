@@ -33,41 +33,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $message = "Site URL updated successfully!";
 }
 
+// Handle delete action
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
+    $del_user = $_POST['delete_user_id'] ?? '';
+    $del_site = $_POST['delete_site_id'] ?? '';
+    $delParams = [];
+    $delSql = "DELETE FROM credentials WHERE 1";
+
+    if (!empty($del_user)) {
+        $delSql .= " AND user_id = :user_id";
+        $delParams[':user_id'] = $del_user;
+    }
+    if (!empty($del_site)) {
+        $delSql .= " AND site_id = :site_id";
+        $delParams[':site_id'] = $del_site;
+    }
+
+    if (empty($delParams)) {
+        $message = "Provide at least one pattern to delete.";
+    } else {
+        runQuery($delSql, $delParams);
+        $message = "Matching credentials deleted.";
+    }
+}
+
 $users = runQuery("SELECT user_id, username FROM users")->fetchAll(PDO::FETCH_ASSOC);
 $sites = runQuery("SELECT site_id, site_name FROM sites")->fetchAll(PDO::FETCH_ASSOC);
-?>
 
-<?php
-$searchResults = [];
+// Prepare search results HTML (empty by default)
+$searchTableHtml = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'search') {
-    $search_user_id = $_POST['search_user_id'];
-    $search_site_id = $_POST['search_site_id'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'search') {
+        $search_user_id = $_POST['search_user_id'] ?? '';
+        $search_site_id = $_POST['search_site_id'] ?? '';
 
-    $sql = "SELECT u.username AS user_name, s.site_name,
-                   CAST(AES_DECRYPT(c.password, 'secret_key') AS CHAR) AS decrypted_password,
-                   c.comment, c.created_at
-            FROM credentials c
-            JOIN users u ON c.user_id = u.user_id
-            JOIN sites s ON c.site_id = s.site_id
-            WHERE 1";
+        $sql = "SELECT u.username AS user_name, s.site_name,
+                       CAST(AES_DECRYPT(c.password, 'secret_key') AS CHAR) AS decrypted_password,
+                       c.comment, c.created_at
+                FROM credentials c
+                JOIN users u ON c.user_id = u.user_id
+                JOIN sites s ON c.site_id = s.site_id
+                WHERE 1";
 
-    $params = [];
+        $params = [];
 
-    if (!empty($search_user_id)) {
-        $sql .= " AND c.user_id = :user_id";
-        $params[':user_id'] = $search_user_id;
+        if (!empty($search_user_id)) {
+            $sql .= " AND c.user_id = :user_id";
+            $params[':user_id'] = $search_user_id;
+        }
+
+        if (!empty($search_site_id)) {
+            $sql .= " AND c.site_id = :site_id";
+            $params[':site_id'] = $search_site_id;
+        }
+
+        $stmt = runQuery($sql, $params);
+        $searchTableHtml = wrapResultsInTable($stmt);
     }
 
-    if (!empty($search_site_id)) {
-        $sql .= " AND c.site_id = :site_id";
-        $params[':site_id'] = $search_site_id;
+    if ($_POST['action'] === 'clear') {
+        $searchTableHtml = '';
     }
-
-    $searchResults = runQuery($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -112,8 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     <h2>Search Stored Credentials</h2>
     <form method="POST">
-        <input type="hidden" name="action" value="search">
-
+        <!-- use button values for action -->
         <label>User:</label>
         <select name="search_user_id">
             <option value="">-- All Users --</option>
@@ -130,30 +158,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <?php endforeach; ?>
         </select><br><br>
 
-        <button type="submit">Search</button>
+        <button type="submit" name="action" value="search">Search</button>
+        <button type="submit" name="action" value="clear">Clear Results</button>
     </form>
 
-    <?php if (!empty($searchResults)): ?>
+    <?php if ($searchTableHtml !== ''): ?>
         <h3>Search Results</h3>
-        <table border="1">
-            <tr>
-                <th>User</th>
-                <th>Site</th>
-                <th>Password</th>
-                <th>Comment</th>
-                <th>Created At</th>
-            </tr>
-            <?php foreach ($searchResults as $row): ?>
-                <tr>
-                    <td><?= htmlspecialchars($row['user_name']) ?></td>
-                    <td><?= htmlspecialchars($row['site_name']) ?></td>
-                    <td><?= htmlspecialchars($row['decrypted_password']) ?></td>
-                    <td><?= htmlspecialchars($row['comment']) ?></td>
-                    <td><?= htmlspecialchars($row['created_at']) ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </table>
+        <?= $searchTableHtml ?>
     <?php endif; ?>
+
+    <h2>Delete Credentials</h2>
+    <form method="POST">
+        <input type="hidden" name="action" value="delete">
+        <label>User:</label>
+        <select name="delete_user_id">
+            <option value="">-- Any User --</option>
+            <?php foreach ($users as $user): ?>
+                <option value="<?= $user['user_id'] ?>"><?= htmlspecialchars($user['username']) ?></option>
+            <?php endforeach; ?>
+        </select><br><br>
+
+        <label>Site:</label>
+        <select name="delete_site_id">
+            <option value="">-- Any Site --</option>
+            <?php foreach ($sites as $site): ?>
+                <option value="<?= $site['site_id'] ?>"><?= htmlspecialchars($site['site_name']) ?></option>
+            <?php endforeach; ?>
+        </select><br><br>
+
+        <button type="submit">Delete</button>
+    </form>
+
     <h2>Update Site URL</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update">
