@@ -152,10 +152,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <input type="text" name="site_name" required>
 
         <label>Site URL:</label>
-        <input type="text" name="site_url">
+        <input type="text" name="site_url" required>
 
         <label>Email:</label>
-        <input type="text" name="email">
+        <input type="text" name="email" required>
 
         <label>Username:</label>
         <input type="text" name="username" required>
