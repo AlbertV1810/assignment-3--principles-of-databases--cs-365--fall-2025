@@ -182,5 +182,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <button type="submit">Update</button>
     </form>
 
+    <form method="POST" style="margin: 20px 0;">
+        <input type="hidden" name="action" value="clear">
+        <button type="submit" style="background-color: #f44336; color: white; padding: 10px 20px; font-size: 16px;">
+            Clear Results
+        </button>
+    </form>
+
 </body>
 </html>
