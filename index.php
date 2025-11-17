@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <p><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
 
-    <h2>Insert  Credential</h2>
+    <h2>Insert New Credential</h2>
     <form method="POST">
         <input type="hidden" name="action" value="insert">
 
