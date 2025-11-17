@@ -2,6 +2,10 @@ DROP DATABASE IF EXISTS student_passwords;
 CREATE DATABASE student_passwords;
 USE student_passwords;
 
+DROP TABLE IF EXISTS credentials;
+DROP TABLE IF EXISTS sites;
+DROP TABLE IF EXISTS users;
+
 CREATE USER IF NOT EXISTS 'passwords_user'@'localhost' IDENTIFIED BY '';
 GRANT ALL PRIVILEGES ON student_passwords.* TO 'passwords_user'@'localhost';
 FLUSH PRIVILEGES;
@@ -22,8 +26,8 @@ CREATE TABLE sites (
 
 CREATE TABLE credentials (
   credential_id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id TEXT,
-  site_id TEXT,
+  user_id INT,
+  site_id INT,
   password VARBINARY(255),
   comment TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
