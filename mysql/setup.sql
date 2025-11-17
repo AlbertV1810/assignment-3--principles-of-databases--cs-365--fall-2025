@@ -2,6 +2,10 @@ DROP DATABASE IF EXISTS student_passwords;
 CREATE DATABASE student_passwords;
 USE student_passwords;
 
+CREATE USER IF NOT EXISTS 'passwords_user'@'localhost' IDENTIFIED BY '';
+GRANT ALL PRIVILEGES ON student_passwords.* TO 'passwords_user'@'localhost';
+FLUSH PRIVILEGES;
+
 CREATE TABLE users (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
   first_name VARCHAR(50),
