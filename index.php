@@ -134,21 +134,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $params[':comment'] = "%" . $_POST['search_comment'] . "%";
         }
 
-        $results = runQuery($sql, $params);
+        $stmt = runQuery($sql, $params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (count($results) > 0) {
+        if (count($rows) > 0) {
             $searchTableHtml = "<table border='1'><tr>
                 <th>Username</th><th>Email</th><th>Site Name</th><th>URL</th>
                 <th>Password</th><th>Comment</th><th>Created At</th></tr>";
-            foreach ($results as $row) {
+            foreach ($rows as $row) {
                 $searchTableHtml .= "<tr>
-                    <td>{$row['user_name']}</td>
-                    <td>{$row['email']}</td>
-                    <td>{$row['site_name']}</td>
-                    <td>{$row['url']}</td>
-                    <td>{$row['decrypted_password']}</td>
-                    <td>{$row['comment']}</td>
-                    <td>{$row['created_at']}</td>
+                    <td>" . htmlspecialchars($row['user_name']) . "</td>
+                    <td>" . htmlspecialchars($row['email']) . "</td>
+                    <td>" . htmlspecialchars($row['site_name']) . "</td>
+                    <td>" . htmlspecialchars($row['url']) . "</td>
+                    <td>" . htmlspecialchars($row['decrypted_password']) . "</td>
+                    <td>" . htmlspecialchars($row['comment']) . "</td>
+                    <td>" . htmlspecialchars($row['created_at']) . "</td>
                 </tr>";
             }
             $searchTableHtml .= "</table>";
